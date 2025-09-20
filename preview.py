@@ -1,3 +1,12 @@
+# preview.py
+# Quick-Clip Clipboard Popup App
+#
+# This file manages the main popup window UI, including previewing clipboard items,
+# scrolling through history, launching the edit page, and handling theme toggling and border rendering.
+#
+# Author: Tof-O
+# License: MIT
+
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGridLayout, QScrollArea
@@ -10,6 +19,7 @@ from text import create_tab_row
 
 class PopupWindow(QMainWindow):
     def toggle_theme(self):
+        """Toggle the theme between light and dark modes."""
         self.theme = 'dark' if self.theme == 'light' else 'light'
         self.save_theme()
         self.apply_theme()
@@ -23,6 +33,7 @@ class PopupWindow(QMainWindow):
             self.setAttribute(Qt.WA_TransparentForMouseEvents)
             self.setStyleSheet("background: transparent;")
         def paintEvent(self, event):
+            """Custom paint event to draw the window border."""
             from PySide6.QtGui import QPainter, QPen, QColor
             painter = QPainter(self)
             pen = QPen()
@@ -33,14 +44,17 @@ class PopupWindow(QMainWindow):
             rect.adjust(2, 2, -2, -2)
             painter.drawRoundedRect(rect, 12, 12)
     def show_edit_page(self):
+        """Switch to edit mode and display the edit page."""
         self.edit_mode = True
         self._init_ui()
         self.apply_theme()
     def show_preview_from_edit(self):
+        """Switch from edit mode to preview mode."""
         self.edit_mode = False
         self._init_ui()
         self.apply_theme()
     def save_edit(self):
+        """Save the edited text and switch back to preview mode."""
         new_text = self.text_edit.toPlainText()
         for idx, (txt, ts) in enumerate(self.items):
             if txt == self.preview_text:
@@ -50,6 +64,7 @@ class PopupWindow(QMainWindow):
         self.edit_mode = False
         self.show_preview(new_text)
     def _init_ui(self):
+        """Initialize the user interface components."""
         central = QWidget()
         self.main_layout = QVBoxLayout(central)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
@@ -136,15 +151,18 @@ class PopupWindow(QMainWindow):
         self.border_widget.raise_()
         self.border_widget.show()
     def resizeEvent(self, event):
+        """Handle the window resize event."""
         super().resizeEvent(event)
         if hasattr(self, 'border_widget'):
             self.border_widget.setGeometry(0, 0, self.width(), self.height())
     def showEvent(self, event):
+        """Handle the window show event."""
         super().showEvent(event)
         if hasattr(self, 'border_widget'):
             self.border_widget.setGeometry(0, 0, self.width(), self.height())
             self.border_widget.raise_()
     def apply_theme(self):
+        """Apply the current theme to the UI components."""
         colors = THEME_COLORS[self.theme]
         self.setStyleSheet(f"""
             QMainWindow {{ background: {colors['bg']}; border-radius: 12px; border: 5px solid {colors['border']} !important; }}
@@ -161,6 +179,7 @@ class PopupWindow(QMainWindow):
         if getattr(self, 'edit_mode', False) and hasattr(self, 'edit_page'):
             self.edit_page.set_theme(self.theme)
     def __init__(self, items, theme=None):
+        """Initialize the PopupWindow with clipboard items and an optional theme."""
         super().__init__()
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.setFixedSize(WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -172,14 +191,18 @@ class PopupWindow(QMainWindow):
         self._init_ui()
         self.apply_theme()
     def load_theme(self):
+        """Load the theme from settings."""
         return load_theme()
     def save_theme(self):
+        """Save the current theme to settings."""
         save_theme(self.theme)
     def show_main_page(self):
+        """Show the main page with clipboard history."""
         self.preview_mode = False
         self._init_ui()
         self.apply_theme()
     def paste_content(self, text):
+        """Paste the given text to the clipboard and simulate a paste action."""
         from PySide6.QtGui import QGuiApplication
         clipboard = QGuiApplication.instance().clipboard()
         clipboard.setText(text)
@@ -200,6 +223,7 @@ class PopupWindow(QMainWindow):
                 print(f"Paste failed: {e}")
         QTimer.singleShot(200, do_paste)
     def show_preview(self, text):
+        """Show the preview of the given text."""
         self.preview_mode = True
         self.preview_text = text
         self._init_ui()
@@ -208,6 +232,7 @@ class PopupWindow(QMainWindow):
             self.border_widget.theme = self.theme
             self.border_widget.update()
     def show_at_cursor(self):
+        """Show the popup window at the current cursor position."""
         pos = QCursor.pos()
         self.move(pos.x(), pos.y())
         self.show()

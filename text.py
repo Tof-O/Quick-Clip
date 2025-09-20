@@ -1,3 +1,12 @@
+# text.py
+# Quick-Clip Clipboard Popup App
+#
+# This file contains clipboard monitoring logic, hotkey listeners, and tab row creation for displaying clipboard items.
+# Manages clipboard history and theme persistence.
+#
+# Author: Tof-O
+# License: MIT
+
 from PySide6.QtCore import QTimer, Signal, QObject
 import keyboard
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QWidget

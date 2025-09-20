@@ -1,8 +1,27 @@
+# edit.py
+# Quick-Clip Clipboard Popup App
+#
+# This file defines the EditPage widget, which provides a user interface for editing clipboard items.
+# Features:
+# - Top bar with back, label, and save buttons
+# - Text editor for modifying clipboard content
+# - Cancel functionality
+# - Dynamic theme support (light/dark)
+# - Integration with clipboard history
+#
+# Author: Tof-O
+# License: MIT
+
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QTextEdit
 from PySide6.QtCore import Qt
 from text import update_clipboard_item
 
 class EditPage(QWidget):
+    """
+    Widget for editing a clipboard entry.
+    Allows users to modify, save, or cancel changes to clipboard text.
+    Applies current theme and updates clipboard history.
+    """
     def __init__(self, original_text, items, preview_text, on_show_preview, theme='light'):
         super().__init__()
         self.original_text = original_text
@@ -46,24 +65,28 @@ class EditPage(QWidget):
         layout.addLayout(cancel_row)
 
     def _save_edit(self):
+        """Save the edited text to the clipboard history and return to preview."""
         new_text = self.text_edit.toPlainText()
         update_clipboard_item(self.items, self.preview_text, new_text)
         self.preview_text = new_text
         self.on_show_preview(new_text)
 
     def _on_cancel(self):
+        """Cancel editing and return to preview."""
         self.on_show_preview(self.preview_text)
 
     def _on_back(self):
+        """Go back to preview without saving changes."""
         self.on_show_preview(self.preview_text)
 
     def apply_theme(self):
-        # Dynamic colors for dark/light theme
+        """Apply the current theme to the editor UI."""
         bg_color = "#232629" if self.theme == "dark" else "#fff"
         text_color = "#f0f0f0" if self.theme == "dark" else "#222"
         self.text_edit.setStyleSheet(f"background: {bg_color}; color: {text_color}; padding: 10px;")
         self.label.setStyleSheet(f"font-size:18px; color: {text_color};")
 
     def set_theme(self, theme):
+        """Set and apply a new theme."""
         self.theme = theme
         self.apply_theme()

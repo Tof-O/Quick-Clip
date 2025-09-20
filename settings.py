@@ -1,3 +1,12 @@
+# settings.py
+# Quick-Clip Clipboard Popup App
+#
+# Centralized configuration for window dimensions, theme colors, and button settings.
+# Provides functions to load and save theme preferences.
+#
+# Author: Tof-O
+# License: MIT
+
 WINDOW_WIDTH = 350
 WINDOW_HEIGHT = 400
 DEFAULT_THEME = "light"
@@ -37,6 +46,7 @@ import os, json
 CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".clipboard_popup_theme.json")
 
 def load_theme():
+    """Load the theme from the configuration file."""
     if os.path.exists(CONFIG_PATH):
         try:
             with open(CONFIG_PATH, "r") as f:
@@ -47,6 +57,7 @@ def load_theme():
     return DEFAULT_THEME
 
 def save_theme(theme):
+    """Save the selected theme to the configuration file."""
     try:
         with open(CONFIG_PATH, "w") as f:
             json.dump({"theme": theme}, f)

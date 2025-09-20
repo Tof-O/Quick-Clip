@@ -1,3 +1,11 @@
+# main.py
+# Quick-Clip Clipboard Popup App
+#
+# Entry point for the application. Initializes the Qt application and starts the hotkey listener.
+#
+# Author: Tof-O
+# License: MIT
+
 import sys
 from PySide6.QtWidgets import QApplication
 from preview import PopupWindow
