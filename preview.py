@@ -56,9 +56,9 @@ class PopupWindow(QMainWindow):
     def save_edit(self):
         """Save the edited text and switch back to preview mode."""
         new_text = self.text_edit.toPlainText()
-        for idx, (txt, ts) in enumerate(self.items):
-            if txt == self.preview_text:
-                self.items[idx] = (new_text, ts)
+        for idx, item in enumerate(self.items):
+            if item["text"] == self.preview_text:
+                self.items[idx]["text"] = new_text
                 self.preview_text = new_text
                 break
         self.edit_mode = False
@@ -122,11 +122,23 @@ class PopupWindow(QMainWindow):
             preview_content_layout = QVBoxLayout(preview_content)
             preview_content_layout.setContentsMargins(10, 10, 10, 10)
             preview_content_layout.setAlignment(Qt.AlignTop)
-            preview_text_label = QLabel(self.preview_text)
-            preview_text_label.setWordWrap(True)
-            preview_text_label.setAlignment(Qt.AlignTop)
-            preview_text_label.setStyleSheet("padding: 10px;")
-            preview_content_layout.addWidget(preview_text_label)
+            # Show the actual text and timestamp
+            preview_item = next((item for item in self.items if item["text"] == self.preview_text), None)
+            if preview_item:
+                preview_text_label = QLabel(preview_item["text"])
+                preview_text_label.setWordWrap(True)
+                preview_text_label.setAlignment(Qt.AlignTop)
+                preview_text_label.setStyleSheet("padding: 10px;")
+                preview_content_layout.addWidget(preview_text_label)
+                ts_label = QLabel(f"<i>{preview_item['ts']}</i>")
+                ts_label.setStyleSheet("padding-left:10px; color: #888;")
+                preview_content_layout.addWidget(ts_label)
+            else:
+                preview_text_label = QLabel(self.preview_text)
+                preview_text_label.setWordWrap(True)
+                preview_text_label.setAlignment(Qt.AlignTop)
+                preview_text_label.setStyleSheet("padding: 10px;")
+                preview_content_layout.addWidget(preview_text_label)
             scroll.setWidget(preview_content)
             preview_layout.addWidget(scroll)
             self.main_layout.addLayout(preview_layout)
@@ -136,9 +148,9 @@ class PopupWindow(QMainWindow):
             tab_content = QWidget()
             tab_content_layout = QVBoxLayout(tab_content)
             tab_content_layout.setAlignment(Qt.AlignTop)
-            for idx, (text, ts) in enumerate(self.items):
+            for idx, item in enumerate(self.items):
                 tab_widget = create_tab_row(
-                    text, ts,
+                    item["text"], item["ts"],
                     on_preview=self.show_preview,
                     on_paste=self.paste_content
                 )

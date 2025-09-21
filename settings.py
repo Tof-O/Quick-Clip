@@ -43,6 +43,46 @@ BUTTON_CONFIG = {
 }
 
 import os, json
+try:
+    import winshell
+except ImportError:
+    winshell = None
+
+COPY_FILE = os.path.join(os.path.dirname(__file__), 'copy.json')
+
+def add_to_startup():
+    """Add this app to Windows startup using a shortcut."""
+    if winshell is None:
+        return False
+    exe_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'main.py'))
+    startup = winshell.startup()
+    shortcut = os.path.join(startup, 'Quick-Clip.lnk')
+    if not os.path.exists(shortcut):
+        from win32com.client import Dispatch
+        shell = Dispatch('WScript.Shell')
+        shortcut_obj = shell.CreateShortCut(shortcut)
+        shortcut_obj.Targetpath = exe_path
+        shortcut_obj.WorkingDirectory = os.path.dirname(exe_path)
+        shortcut_obj.save()
+    return True
+
+def load_copies():
+    """Load clipboard history from copy.json."""
+    if os.path.exists(COPY_FILE):
+        try:
+            with open(COPY_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            return []
+    return []
+
+def save_copies(items):
+    """Save clipboard history to copy.json."""
+    try:
+        with open(COPY_FILE, 'w', encoding='utf-8') as f:
+            json.dump(items, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
 CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".clipboard_popup_theme.json")
 
 def load_theme():

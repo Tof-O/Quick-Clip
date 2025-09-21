@@ -34,10 +34,20 @@ class HotkeyListener(QObject):
     show_popup_signal = Signal(str)
     def __init__(self):
         super().__init__()
-        self.items = []  # Each copy is a new tab, format: (text, timestamp)
+        from settings import load_copies
+        from PySide6.QtGui import QGuiApplication
+        # Each copy is a dict: {"text": ..., "ts": ...}
+        self.items = load_copies()  # Persistent clipboard history
         self.theme = self.load_theme()
         self.popup = None
-        self.last_clipboard = ""
+        # Set last_clipboard to current clipboard content, not just first item in history
+        clipboard = QGuiApplication.instance().clipboard()
+        if clipboard.mimeData().hasText():
+            self.last_clipboard = clipboard.text().strip()
+        elif self.items:
+            self.last_clipboard = self.items[0]["text"]
+        else:
+            self.last_clipboard = ""
         self.show_popup_signal.connect(self.show_popup)
         keyboard.add_hotkey('ctrl+v', self.on_ctrl_v, suppress=True)
         keyboard.add_hotkey('ctrl+c', self.on_ctrl_c)
@@ -57,25 +67,35 @@ class HotkeyListener(QObject):
         return "light"
     def check_clipboard(self):
         from PySide6.QtGui import QGuiApplication
+        from settings import save_copies
         clipboard = QGuiApplication.instance().clipboard()
         if clipboard.mimeData().hasText():
-            text = clipboard.text().strip()
-            if text and text != self.last_clipboard and (not self.items or self.items[0][0] != text):
+            text = clipboard.text()
+            # Normalize: remove all whitespace and null chars for deduplication
+            def normalize(s):
+                return ''.join(c for c in s if not c.isspace() and c != '\u0000').lower()
+            normalized_text = normalize(text)
+            already_exists = any(normalize(item["text"]) == normalized_text for item in self.items)
+            if text and not already_exists:
                 from datetime import datetime
                 ts = datetime.now().strftime(' %d-%m-%Y, %H:%M')
-                self.items.insert(0, (text, ts))
+                self.items.insert(0, {"text": text, "ts": ts})
                 self.last_clipboard = text
+                save_copies(self.items)
                 if self.popup and self.popup.isVisible():
                     self.popup.items = self.items
                     self.popup._init_ui()
                     self.popup.apply_theme()
+            # Always update last_clipboard to current clipboard
+            elif text:
+                self.last_clipboard = text
     def on_ctrl_c(self):
         pass
     def on_ctrl_v(self):
         self.show_popup_signal.emit("")
     def show_popup(self, _):
         if not self.items:
-            self.items.append(("(No copied items yet)", ""))
+            self.items.append({"text": "(No copied items yet)", "ts": ""})
         self.theme = self.load_theme()
         if self.popup is None:
             from preview import PopupWindow
@@ -99,8 +119,8 @@ class HotkeyListener(QObject):
         except Exception:
             pass
 def update_clipboard_item(items, old_text, new_text):
-    for idx, (txt, ts) in enumerate(items):
-        if txt == old_text:
-            items[idx] = (new_text, ts)
+    for idx, item in enumerate(items):
+        if item["text"] == old_text:
+            items[idx]["text"] = new_text
             return idx
     return -1
